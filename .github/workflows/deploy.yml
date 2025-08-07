@@ -1,0 +1,47 @@
+# name: Build and Deploy Rust Project
+# 
+# on:
+#   push:
+#     branches:
+#       - master  # Trigger for the master branch
+#   workflow_dispatch:  # Allows manual triggering
+# 
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+# 
+#     steps:
+#       
+#       - name: Checkout code
+#         uses: actions/checkout@v2
+# 
+#       - name: Install Rust
+#         uses: actions-rs/toolchain@v1
+#         with:
+#           profile: minimal
+#           toolchain: stable
+#       
+#       - name: Build Project
+#         run: cargo build --release
+# 
+#       # Step 2: Set up SSH key for accessing VPS
+#       - name: Set up SSH
+#         uses: webfactory/ssh-agent@v0.5.3
+#         with:
+#           ssh-private-key: ${{secrets.SSH_PRIVATE_KEY}}
+# 
+#       # Optional: Add VPS to known hosts
+#       - name: Add VPS to known hosts
+#         run: |
+#           ssh-keyscan -H ${{secrets.IP_HOST}} >> ~/.ssh/known_hosts
+# 
+#       # Create directory on VPS (if it doesn't exist)
+#       - name: Create directory on VPS (if not exists)
+#         run: |
+#           ssh root@${{secrets.IP_HOST}}  "mkdir -p /root/rust-server"
+# 
+#       # Deploy .so to VPS
+#       - name: Deploy to VPS .so
+#         run: |
+#           scp target/release/rubot root@${{secrets.IP_HOST}}:/root/rust-server/rubot
+

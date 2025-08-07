@@ -1,11 +1,16 @@
-use crate::{models::Update, telegram_api::TelegramApi};
+use crate::{models::Update, response_former::ResponseFormer, telegram_api::TelegramApi};
 use actix_web::{
     web::{Data, Json},
     HttpResponse, Responder,
 };
 use log::error;
+use std::sync::Arc;
 
-pub async fn telegram_webhook(update: Json<Update>, api: Data<TelegramApi>) -> impl Responder {
+pub async fn telegram_webhook(
+    update: Json<Update>,
+    api: Data<Arc<TelegramApi>>,
+    response_former: Data<Arc<ResponseFormer>>,
+) -> impl Responder {
     if update.message.is_none() {
         return HttpResponse::BadRequest().finish();
     }
@@ -14,12 +19,11 @@ pub async fn telegram_webhook(update: Json<Update>, api: Data<TelegramApi>) -> i
     let message = update.message.unwrap_or_default();
     let text: String = message.text.unwrap_or_default();
 
-    let reply_text = match text.as_str() {
-        "/start" => "Привет! Я сервер на Rust".to_string(),
-        _ => format!("Вы написали: {}", text),
-    };
+    let chat_id = message.chat.unwrap_or_default().id.unwrap_or_default();
 
-    let response = api.send_message(&message.chat.id, &reply_text).await;
+    let response = api
+        .send_message(&chat_id, &response_former.form(text).await)
+        .await;
 
     match response {
         Ok(res) => {
